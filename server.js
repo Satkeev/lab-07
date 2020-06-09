@@ -11,8 +11,20 @@ require('dotenv').config();
 // bodyguard of our server - tells who is ok to send data to
 const cors = require('cors');
 app.use(cors());
+const superagent = require('superagent');
 
+app.get('/location', (request, response) => {
+  let city = request.query.city;
 
+  let url = `https://us1.locationiq.com/v1/search.php?key=85436fac932d82&q=${city}&format=json`;
+  
+  superagent.get(url)
+    .then(resultsFromSuperAgent => {
+      let finalObj = new Location(city, resultsFromSuperAgent.body[0]);
+
+      response.status(200).send(finalObj);
+    })
+  })
 // bring in the PORT by using process.env.variable name
 const PORT = process.env.PORT || 3001;
 
