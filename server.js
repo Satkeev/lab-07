@@ -32,21 +32,22 @@ app.get('/weather', (request, response) => {
       }).catch(err => console.log(err));
 })
 
-app.get('/trail', (request, response) => {
-  const { latitude, longitude } = request.query;
+app.get('/trails', (request, response) => {
+  const lat = request.query.latitude;
+  const lon = request.query.longitude;
   const key = process.env.TRIAL_API_KEY;
-  const url = `https://www.hikingproject.com/data/get-trails?lat=${latitude}&lon=${longitude}&maxDistance=10&key=${key}`;
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${lat}&lon=${lon}&maxDistance=10&key=${key}`;
   
   superagent.get(url)
   .then(resultsFromSuperAgent => {
     const data = resultsFromSuperAgent.body.trails;
     const results = data.map(item => new Trail(item));
     console.log(results);
-    response.status(200).send(rsults);
-  })
+    response.status(200).send(results);
+  }).catch(err=> console.log(err));
 })
 
-function Trail(searchQuery, obj){
+function Trail(obj){
   this.name = obj.name;
   this.location = obj.location;
   this.length = obj.length;
