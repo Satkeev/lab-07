@@ -1,68 +1,69 @@
 'use strict';
-
-// express library sets up our server
 const express = require('express');
-// initalizes our express library into our variable called app
 const app = express();
-
-// dotenv lets us get our secrets from our .env file
 require('dotenv').config();
-
-// bodyguard of our server - tells who is ok to send data to
 const cors = require('cors');
 app.use(cors());
 const superagent = require('superagent');
 
 app.get('/location', (request, response) => {
   let city = request.query.city;
-
-  let url = `https://us1.locationiq.com/v1/search.php?key=85436fac932d82&q=${city}&format=json`;
+  let url = `https://us1.locationiq.com/v1/search.php?key=${process.env.GEOCODE_API_KEY}&q=${city}&format=json`;
   
   superagent.get(url)
     .then(resultsFromSuperAgent => {
       let finalObj = new Location(city, resultsFromSuperAgent.body[0]);
-
       response.status(200).send(finalObj);
     })
   })
-// bring in the PORT by using process.env.variable name
+
+app.get('/weather', (request, response) => {
+    let search_query = request.query.search_query;
+    console.log('stuff I got from the front end on the weather route', search_query);
+  
+    let url = `https://api.weatherbit.io/v2.0/forecast/daily?city=${search_query}&key=${process.env.WEATHER_API_KEY}&days=8`;
+  
+    superagent.get(url)
+      .then(resultsFromSuperAgent => {
+      let weatherResult = resultsFromSuperAgent.body.data.map(day => {
+      return new Weather(day); 
+      }) 
+      response.status(200).send(weatherResult);
+      }).catch(err => console.log(err));
+})
+
+app.get('/trail', (request, response) => {
+  const { latitude, longitude } = request.query;
+  const key = process.env.TRIAL_API_KEY;
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${latitude}&lon=${longitude}&maxDistance=10&key=${key}`;
+  
+  superagent.get(url)
+  .then(resultsFromSuperAgent => {
+    const data = resultsFromSuperAgent.body.trails;
+    const results = data.map(item => new Trail(item));
+    console.log(results);
+    response.status(200).send(rsults);
+  })
+})
+
+function Trail(searchQuery, obj){
+  this.name = obj.name;
+  this.location = obj.location;
+  this.length = obj.length;
+  this.stars = obj.stars;
+  this.star_votes = obj.starVotes;
+  this.summary = obj.summary;
+  this.trail_url = obj.url;
+  this.conditions = obj.conditionStatus;
+  this.condition_date = obj.conditionDate;
+  this.condition_time = obj.conditionDate;
+}
+
 const PORT = process.env.PORT || 3001;
 
-app.get('/location', (request, response) => {
-  try{
-    // query: { city: 'seattle' },
-    console.log(request.query.city);
-    let search_query = request.query.city;
-    let geoData = require('./data/location.json');
-    let returnObj = new Location(search_query, geoData[0]);
-    console.log(returnObj);
-
-    response.status(200).send(returnObj);
-    } catch(err){
-    console.log('ERROR', err);
-
-    response.status(500).send('sorry, we messed up');
-  }
-})
-app.get('/weather', (request, response) => {
-try {
-    // let weatherInfo = getWeather(request.query.data);
-    response.status(200).send(getWeather());
-    } catch(err){
-  console.log('ERROR', err);
-  response.status(500).send('sorry, we messed up');
-}
-})
 function Weather(obj){
     this.forecast = obj.weather.description;
     this.time = obj.valid_date;
-}
-function getWeather(){
-    const weatherData = require('./data/weather.json');
-    let climate = weatherData.data.map(day => {
-    return new Weather(day);
-    })
-    return climate;
 }
    
 function Location(searchQuery, obj){
