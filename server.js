@@ -67,7 +67,7 @@ app.get('/weather', (request, response) => {
 
 app.get('/trails', (request, response) => {
   let {latitude, longitude} = request.query;
-  let url = `https://www.hikingproject.com/data/get-trails?lat=${lat}&lon=${lon}&maxDistance=10&key=${key}`;
+  let url = `https://www.hikingproject.com/data/get-trails?lat=${latitude}&lon=${longitude}&maxDistance=10&key=${process.env.TRIAL_API_KEY}`;
   
   superagent.get(url)
     .then(resultsFromSuperAgent => {
